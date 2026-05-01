@@ -38,9 +38,9 @@ if (isset($_POST['login'])) {
     $username = trim($_POST['student_id']);
     $password = $_POST['password'];
 
-    /* ================= ADMIN LOGIN ================= */
     try {
 
+        /* ================= ADMIN LOGIN ================= */
         $stmt = $conn->prepare("
             SELECT *
             FROM admin
@@ -56,6 +56,7 @@ if (isset($_POST['login'])) {
 
         if ($admin) {
 
+            // NOTE: still plain text compare (same as your original)
             if ($password == $admin['password']) {
 
                 $_SESSION['admin'] = $admin['username'];
@@ -99,7 +100,6 @@ if (isset($_POST['login'])) {
         }
 
         /* ================= STUDENT LOGIN ================= */
-
         $stmt = $conn->prepare("
             SELECT *
             FROM students
@@ -174,6 +174,7 @@ if (isset($_POST['login'])) {
 }
 
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -538,7 +539,6 @@ if (isset($_POST['login'])) {
 
                     </label>
 
-                
                     <a href="https://<?php echo $_SERVER['HTTP_HOST'] . $base_url; ?>forgotpassword.php">
                         Forgot Password?
                     </a>
@@ -552,7 +552,6 @@ if (isset($_POST['login'])) {
                     Sign In
                 </button>
 
-                <!-- ✅ UPDATED -->
                 <a
                     class="create-account"
                     href="https://<?php echo $_SERVER['HTTP_HOST'] . $base_url; ?>register.php"
