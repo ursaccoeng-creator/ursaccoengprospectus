@@ -39,132 +39,134 @@ if (isset($_POST['login'])) {
     $password = $_POST['password'];
 
     /* ================= ADMIN LOGIN ================= */
-    $admin_query = "
-        SELECT *
-        FROM admin
-        WHERE username = '$username'
-        LIMIT 1
-    ";
+    try {
 
-    $admin_result = mysqli_query($conn, $admin_query);
+        $stmt = $conn->prepare("
+            SELECT *
+            FROM admin
+            WHERE username = :username
+            LIMIT 1
+        ");
 
-    if (
-        $admin_result &&
-        mysqli_num_rows($admin_result) > 0
-    ) {
-        $admin = mysqli_fetch_assoc($admin_result);
+        $stmt->execute([
+            ':username' => $username
+        ]);
 
-        if ($password == $admin['password']) {
+        $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            $_SESSION['admin'] = $admin['username'];
+        if ($admin) {
 
-            if (isset($_POST['remember'])) {
+            if ($password == $admin['password']) {
 
-                setcookie(
-                    "remember_user",
-                    $username,
-                    time() + (86400 * 30),
-                    "/",
-                    "",
-                    true,
-                    true
+                $_SESSION['admin'] = $admin['username'];
+
+                if (isset($_POST['remember'])) {
+
+                    setcookie(
+                        "remember_user",
+                        $username,
+                        time() + (86400 * 30),
+                        "/",
+                        "",
+                        true,
+                        true
+                    );
+
+                } else {
+
+                    setcookie(
+                        "remember_user",
+                        "",
+                        time() - 3600,
+                        "/",
+                        "",
+                        true,
+                        true
+                    );
+                }
+
+                $_SESSION['login_success'] = "Login successful!";
+                $_SESSION['redirect_to'] =
+                    $base_url . "admin/admin.php";
+
+                header(
+                    "Location: https://" .
+                    $_SERVER['HTTP_HOST'] .
+                    "/index.php"
                 );
-
-            } else {
-
-                setcookie(
-                    "remember_user",
-                    "",
-                    time() - 3600,
-                    "/",
-                    "",
-                    true,
-                    true
-                );
+                exit();
             }
-
-            $_SESSION['login_success'] = "Login successful!";
-            $_SESSION['redirect_to'] =
-                $base_url . "admin/admin.php";
-
-            header(
-                "Location: https://" .
-                $_SERVER['HTTP_HOST'] .
-                "/index.php"
-            );
-            exit();
         }
-    }
 
-    /* ================= STUDENT LOGIN ================= */
-    $student_query = "
-        SELECT *
-        FROM students
-        WHERE student_id = '$username'
-        LIMIT 1
-    ";
+        /* ================= STUDENT LOGIN ================= */
 
-    $student_result = mysqli_query(
-        $conn,
-        $student_query
-    );
+        $stmt = $conn->prepare("
+            SELECT *
+            FROM students
+            WHERE student_id = :student_id
+            LIMIT 1
+        ");
 
-    if (
-        $student_result &&
-        mysqli_num_rows($student_result) > 0
-    ) {
-        $student = mysqli_fetch_assoc(
-            $student_result
-        );
+        $stmt->execute([
+            ':student_id' => $username
+        ]);
 
-        if (
-            password_verify(
-                $password,
-                $student['password']
-            )
-        ) {
+        $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            $_SESSION['student_id'] =
-                $student['student_id'];
+        if ($student) {
 
-            if (isset($_POST['remember'])) {
+            if (
+                password_verify(
+                    $password,
+                    $student['password']
+                )
+            ) {
 
-                setcookie(
-                    "remember_user",
-                    $username,
-                    time() + (86400 * 30),
-                    "/",
-                    "",
-                    true,
-                    true
+                $_SESSION['student_id'] =
+                    $student['student_id'];
+
+                if (isset($_POST['remember'])) {
+
+                    setcookie(
+                        "remember_user",
+                        $username,
+                        time() + (86400 * 30),
+                        "/",
+                        "",
+                        true,
+                        true
+                    );
+
+                } else {
+
+                    setcookie(
+                        "remember_user",
+                        "",
+                        time() - 3600,
+                        "/",
+                        "",
+                        true,
+                        true
+                    );
+                }
+
+                $_SESSION['login_success'] =
+                    "Login successful!";
+
+                $_SESSION['redirect_to'] =
+                    $base_url . "dashboard.php";
+
+                header(
+                    "Location: https://" .
+                    $_SERVER['HTTP_HOST'] .
+                    "/index.php"
                 );
-
-            } else {
-
-                setcookie(
-                    "remember_user",
-                    "",
-                    time() - 3600,
-                    "/",
-                    "",
-                    true,
-                    true
-                );
+                exit();
             }
-
-            $_SESSION['login_success'] =
-                "Login successful!";
-
-            $_SESSION['redirect_to'] =
-                $base_url . "dashboard.php";
-
-            header(
-                "Location: https://" .
-                $_SERVER['HTTP_HOST'] .
-                "/index.php"
-            );
-            exit();
         }
+
+    } catch (PDOException $e) {
+        die("Login error: " . $e->getMessage());
     }
 
     $message = "Invalid login credentials.";
@@ -172,7 +174,6 @@ if (isset($_POST['login'])) {
 }
 
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -537,7 +538,8 @@ if (isset($_POST['login'])) {
 
                     </label>
 
-                    <a href="https://<?php echo $_SERVER['HTTP_HOST']; ?>/prospectus_system/forgotpassword.php">
+                
+                    <a href="https://<?php echo $_SERVER['HTTP_HOST'] . $base_url; ?>forgotpassword.php">
                         Forgot Password?
                     </a>
 
@@ -550,9 +552,10 @@ if (isset($_POST['login'])) {
                     Sign In
                 </button>
 
+                <!-- ✅ UPDATED -->
                 <a
                     class="create-account"
-                    href="https://<?php echo $_SERVER['HTTP_HOST']; ?>/prospectus_system/register.php"
+                    href="https://<?php echo $_SERVER['HTTP_HOST'] . $base_url; ?>register.php"
                 >
                     Get Your Account
                 </a>
