@@ -1,16 +1,18 @@
 <?php
 
-$conn = mysqli_connect(
-    "sql100.infinityfree.com",
-    "if0_41720805",
-    "F12SA7S0s11BtFD",
-    "if0_41720805_prospectus_system"
-);
+$host = "aws-1-ap-northeast-2.pooler.supabase.com";
+$port = "6543";
+$db   = "postgres";
+$user = "postgres.hfshknytaadfkflrflup";
+$pass = "YUa7LSnthajDp0sy";
 
-if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
+try {
+    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$db", $user, $pass);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    echo "Connected to Supabase!";
+} catch (PDOException $e) {
+    echo "Connection failed: " . $e->getMessage();
 }
-
-mysqli_set_charset($conn, "utf8mb4");
 
 ?>
