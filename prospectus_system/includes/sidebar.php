@@ -23,26 +23,32 @@ $student_id  = $_SESSION['student_id'] ?? '';
 $full_name   = '';
 $profile_img = "img/default.png";
 
-if ($student_id != '') {
+if (!empty($student_id)) {
 
-    $query = mysqli_query(
-        $conn,
-        "
-        SELECT full_name, profile_image
-        FROM students
-        WHERE student_id = '$student_id'
-        LIMIT 1
-        "
-    );
+    try {
+        $stmt = $conn->prepare("
+            SELECT full_name, profile_image
+            FROM students
+            WHERE student_id = :student_id
+            LIMIT 1
+        ");
 
-    $row = mysqli_fetch_assoc($query);
+        $stmt->execute([
+            ':student_id' => $student_id
+        ]);
 
-    $full_name = $row['full_name'] ?? '';
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!empty($row['profile_image'])) {
-        $profile_img =
-            "uploads/" .
-            $row['profile_image'];
+        if ($row) {
+            $full_name = $row['full_name'] ?? '';
+
+            if (!empty($row['profile_image'])) {
+                $profile_img = "uploads/" . $row['profile_image'];
+            }
+        }
+
+    } catch (PDOException $e) {
+        die("Query failed: " . $e->getMessage());
     }
 }
 
@@ -218,7 +224,7 @@ if ($student_id != '') {
             </button>
 
             <a
-                href="<?php echo $site_url; ?>logout.php"
+                href="/index.php"
                 class="confirm-btn"
             >
                 Logout
@@ -229,7 +235,6 @@ if ($student_id != '') {
     </div>
 
 </div>
-
 <style>
 
 .mobile-header{
